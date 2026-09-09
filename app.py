@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans, AgglomerativeClustering
 st.set_page_config(page_title="Wafer Explorer", layout="wide")
 
 BASE_DIR = Path(__file__).resolve().parent
-IMAGE_FOLDER = BASE_DIR / "wafer_images"
+IMAGE_FOLDER = BASE_DIR / "wafer-images"
 DATA_FOLDER = BASE_DIR / "data"
 
 st.markdown("""
