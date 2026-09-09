@@ -4,101 +4,282 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 
 
-st.set_page_config(page_title="Wafer Explorer", layout="wide")
+# ---------------------------------------------------------------------
+# Page setup
+# ---------------------------------------------------------------------
+
+st.set_page_config(
+    page_title="Wafer Explorer",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+
+# ---------------------------------------------------------------------
+# Styling
+# ---------------------------------------------------------------------
 
 st.markdown(
     """
     <style>
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: "Inter", sans-serif;
+    }
+
     .stApp {
-        background-color: #eeeeee;
+        background: #F4F5F6;
+        color: #181A1D;
     }
 
+    .block-container {
+        max-width: 1500px;
+        padding-top: 2.1rem;
+        padding-bottom: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+
+    /* Main heading */
+    .wafer-title {
+        font-family: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+        font-size: 52px;
+        line-height: 1.02;
+        letter-spacing: -2.2px;
+        font-weight: 500;
+        color: #181A1D;
+        margin: 0 0 8px 0;
+    }
+
+    .wafer-disclaimer {
+        font-family: "Inter", sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #747A82;
+        margin-bottom: 24px;
+    }
+
+    /* Control labels */
     label {
-        color: black !important;
-        font-weight: 600 !important;
+        font-family: "Inter", sans-serif !important;
+        color: #181A1D !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: 1.1px !important;
+        text-transform: uppercase !important;
     }
 
-    div[data-testid="stToggle"] * {
-        color: black !important;
+    /* Select boxes */
+    div[data-baseweb="select"] > div {
+        background: #202328 !important;
+        border: 1px solid #202328 !important;
+        border-radius: 6px !important;
+        min-height: 48px !important;
     }
 
-    div[data-baseweb="select"] > div,
+    div[data-baseweb="select"] span {
+        color: #F7F7F7 !important;
+        font-family: "Inter", sans-serif !important;
+    }
+
+    div[data-baseweb="select"] svg {
+        fill: #F7F7F7 !important;
+    }
+
+    /* Number input */
     div[data-testid="stNumberInput"] input {
-        background-color: #262730 !important;
-        color: white !important;
+        background: #202328 !important;
+        color: #F7F7F7 !important;
+        border-color: #202328 !important;
+        min-height: 48px !important;
+        text-align: center;
+        font-family: "Inter", sans-serif !important;
     }
+
+    div[data-testid="stNumberInput"] button {
+        background: #202328 !important;
+        color: #F7F7F7 !important;
+        border-color: #34383E !important;
+        min-height: 48px !important;
+    }
+
+    div[data-testid="stNumberInput"] button:hover {
+        background: #2A2E34 !important;
+    }
+
+    /* Containers/cards */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background: #FFFFFF;
+        border: 1px solid #D9DDE2 !important;
+        border-radius: 7px !important;
+        box-shadow: none !important;
+    }
+
+    /* Section headings */
+    .section-heading {
+        font-family: "Inter", sans-serif;
+        font-size: 13px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: 1.35px;
+        color: #181A1D;
+        text-transform: uppercase;
+        margin-top: 2px;
+        margin-bottom: 8px;
+    }
+
+    .section-line {
+        width: 44px;
+        height: 4px;
+        background: #00A6A6;
+        border-radius: 2px;
+        margin-bottom: 16px;
+    }
+
+    .selected-wafer {
+        font-family: "Inter", sans-serif;
+        color: #181A1D;
+        font-size: 17px;
+        font-weight: 600;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 1px;
+    }
+
+    .selected-cluster {
+        font-family: "Inter", sans-serif;
+        color: #666D75;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: 14px;
+    }
+
+    /* Toggle text */
+    div[data-testid="stToggle"] p {
+        color: #181A1D !important;
+        font-family: "Inter", sans-serif !important;
+        font-size: 14px !important;
+    }
+
+    /* Cyan toggle */
+    div[data-testid="stToggle"] button[aria-checked="true"] {
+        background-color: #00A6A6 !important;
+    }
+
+    /* Dataframe */
+    div[data-testid="stDataFrame"] {
+        border: 1px solid #D9DDE2;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    /* Remove excess Streamlit chrome */
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+    header[data-testid="stHeader"] {
+        background: transparent;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
 )
 
+
+# ---------------------------------------------------------------------
+# Header
+# ---------------------------------------------------------------------
+
 st.markdown(
-    "<h1 style='color:black;'>Wafer Explorer</h1>",
+    '<div class="wafer-title">Wafer Explorer</div>',
     unsafe_allow_html=True,
 )
 
 st.markdown(
-    "<p style='color:#666666; font-size:14px;'>"
-    "Portfolio reproduction using synthetic wafer maps and synthetic image embeddings. "
-    "No proprietary manufacturing data is included."
-    "</p>",
+    """
+    <div class="wafer-disclaimer">
+        Portfolio reproduction using synthetic wafer images and synthetic image embeddings.
+        No proprietary manufacturing data is included.
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
-show_cluster_outlines = st.session_state.get(
-    "show_cluster_outlines",
-    True,
-)
 
-col1, col2 = st.columns([3, 1])
+# ---------------------------------------------------------------------
+# Controls
+# ---------------------------------------------------------------------
 
-with col1:
-    feature_set = st.selectbox(
-        "Feature Set",
-        ["DINOv3-S", "DINOv3-B"],
+with st.container(border=True):
+
+    control_1, control_2, control_3 = st.columns(
+        [1, 1, 1],
+        gap="large",
     )
 
-    clustering_method = st.selectbox(
-        "Clustering Method",
-        ["K-Means", "Agglomerative"],
-    )
+    with control_1:
+        feature_set = st.selectbox(
+            "Feature Set",
+            ["DINOv3-S", "DINOv3-B"],
+        )
 
-    n_clusters = st.number_input(
-        "Number of Clusters",
-        min_value=2,
-        max_value=10,
-        value=3,
-        step=1,
-    )
+    with control_2:
+        clustering_method = st.selectbox(
+            "Clustering Method",
+            ["K-Means", "Agglomerative"],
+        )
 
+    with control_3:
+        n_clusters = st.number_input(
+            "Number of Clusters",
+            min_value=2,
+            max_value=10,
+            value=3,
+            step=1,
+        )
+
+
+st.write("")
+
+
+# ---------------------------------------------------------------------
+# Synthetic embedding data
+# ---------------------------------------------------------------------
 
 @st.cache_data
 def generate_demo_data(feature_set):
+
     rng = np.random.default_rng(
         42 if feature_set == "DINOv3-S" else 84
     )
 
     n = 284
 
+    # Continuous latent structure so the t-SNE forms a manifold/cloud
+    # instead of artificial isolated blobs.
     t = np.sort(
-        rng.uniform(
-            -3.0,
-            3.0,
-            n,
-        )
+        rng.uniform(-3.0, 3.0, n)
     )
 
     latent = np.column_stack(
         [
             2.2 * t + 0.45 * np.sin(2.2 * t),
-            1.5 * np.sin(1.05 * t)
-            + 0.25 * np.sin(2.7 * t),
+            1.5 * np.sin(1.05 * t) + 0.25 * np.sin(2.7 * t),
             np.cos(0.8 * t),
             np.sin(1.7 * t),
             (t ** 2) / 4.0,
@@ -137,29 +318,26 @@ def generate_demo_data(feature_set):
     pattern_types = np.array(
         [
             "edge",
-            "scratch",
+            "texture",
             "local",
-            "ring",
+            "band",
             "center",
-            "random",
+            "streak",
             "clean",
         ]
     )
 
-    band = np.floor(
-        (
-            (t - t.min())
-            / (
-                t.max()
-                - t.min()
-                + 1e-9
-            )
-        )
-        * len(pattern_types)
+    normalized_t = (
+        (t - t.min())
+        / (t.max() - t.min() + 1e-9)
+    )
+
+    pattern_idx = np.floor(
+        normalized_t * len(pattern_types)
     ).astype(int)
 
-    band = np.clip(
-        band,
+    pattern_idx = np.clip(
+        pattern_idx,
         0,
         len(pattern_types) - 1,
     )
@@ -167,16 +345,17 @@ def generate_demo_data(feature_set):
     df = pd.DataFrame(
         {
             "labels": labels,
-            "pattern": pattern_types[band],
-            "seed": np.arange(
-                1000,
-                1000 + n,
-            ),
+            "pattern": pattern_types[pattern_idx],
+            "seed": np.arange(1000, 1000 + n),
         }
     )
 
     return df, X
 
+
+# ---------------------------------------------------------------------
+# t-SNE + clustering
+# ---------------------------------------------------------------------
 
 @st.cache_data
 def run_analysis(
@@ -184,6 +363,7 @@ def run_analysis(
     clustering_method,
     n_clusters,
 ):
+
     df, X = generate_demo_data(
         feature_set
     )
@@ -203,12 +383,15 @@ def run_analysis(
     )
 
     if clustering_method == "K-Means":
+
         model = KMeans(
             n_clusters=n_clusters,
             random_state=42,
             n_init=20,
         )
+
     else:
+
         model = AgglomerativeClustering(
             n_clusters=n_clusters,
             linkage="ward",
@@ -224,246 +407,315 @@ def run_analysis(
     return df
 
 
+# ---------------------------------------------------------------------
+# Synthetic square inspection images
+# ---------------------------------------------------------------------
+
 @st.cache_data
 def make_wafer_png(
     pattern,
     seed,
-    size=86,
+    size=100,
 ):
+
     rng = np.random.default_rng(
         int(seed)
     )
 
-    img = Image.new(
-        "RGBA",
+    # Base grayscale inspection texture
+    base = rng.normal(
+        143,
+        16,
         (size, size),
-        (0, 0, 0, 0),
     )
 
-    draw = ImageDraw.Draw(img)
+    yy, xx = np.mgrid[
+        0:size,
+        0:size
+    ]
 
-    grid = 25
-    margin = 5
-    cell = (
-        size
-        - 2 * margin
-    ) / grid
+    # Fine repeated sensor/material texture
+    fine_texture = (
+        5 * np.sin(xx * 0.85)
+        + 4 * np.sin(yy * 0.93)
+        + 3 * np.sin((xx + yy) * 0.37)
+    )
 
-    cx = cy = (
-        grid - 1
-    ) / 2
+    base += fine_texture
 
-    radius = grid * 0.47
+    # Slight illumination variation
+    cx = size / 2 + rng.uniform(-8, 8)
+    cy = size / 2 + rng.uniform(-8, 8)
 
-    valid = []
+    dist = np.sqrt(
+        (xx - cx) ** 2
+        + (yy - cy) ** 2
+    )
 
-    for row in range(grid):
-        for col in range(grid):
-            if (
-                (col - cx) ** 2
-                + (row - cy) ** 2
-                <= radius ** 2
-            ):
-                valid.append(
-                    (row, col)
-                )
+    base += (
+        13
+        * np.exp(
+            -(dist ** 2)
+            / (2 * (size * 0.42) ** 2)
+        )
+    )
 
+    # Pattern-dependent synthetic structures
     if pattern == "center":
-        defect = {
-            p
-            for p in valid
-            if (
-                (p[1] - cx) ** 2
-                + (p[0] - cy) ** 2
-                < (
-                    radius * 0.28
-                ) ** 2
-                and rng.random()
-                < 0.72
-            )
-        }
 
-    elif pattern == "ring":
-        defect = {
-            p
-            for p in valid
-            if (
-                radius * 0.60
-                < np.hypot(
-                    p[1] - cx,
-                    p[0] - cy,
-                )
-                < radius * 0.84
-                and rng.random()
-                < 0.54
+        defect = np.exp(
+            -(
+                (xx - size * 0.52) ** 2
+                + (yy - size * 0.50) ** 2
             )
-        }
+            / (
+                2 * (size * 0.14) ** 2
+            )
+        )
+
+        base -= 70 * defect
 
     elif pattern == "edge":
-        angle0 = rng.uniform(
-            -np.pi,
-            np.pi,
-        )
 
-        defect = {
-            p
-            for p in valid
-            if (
-                np.hypot(
-                    p[1] - cx,
-                    p[0] - cy,
-                )
-                > radius * 0.69
-                and abs(
-                    np.angle(
-                        np.exp(
-                            1j
-                            * (
-                                np.arctan2(
-                                    p[0] - cy,
-                                    p[1] - cx,
-                                )
-                                - angle0
-                            )
-                        )
-                    )
-                )
-                < 0.60
-                and rng.random()
-                < 0.72
+        edge_band = (
+            np.exp(
+                -xx
+                / (size * 0.08)
             )
-        }
-
-    elif pattern == "scratch":
-        slope = rng.uniform(
-            -0.8,
-            0.8,
-        )
-
-        offset = rng.uniform(
-            -3.0,
-            3.0,
-        )
-
-        defect = {
-            p
-            for p in valid
-            if (
-                abs(
-                    (p[0] - cy)
-                    - slope
-                    * (p[1] - cx)
-                    - offset
-                )
-                < 1.0
-                and rng.random()
-                < 0.80
+            + np.exp(
+                -(size - xx)
+                / (size * 0.08)
             )
-        }
+            + np.exp(
+                -yy
+                / (size * 0.08)
+            )
+            + np.exp(
+                -(size - yy)
+                / (size * 0.08)
+            )
+        )
+
+        base -= 28 * edge_band
 
     elif pattern == "local":
-        gx, gy = rng.uniform(
-            -5,
-            5,
-            size=2,
+
+        px = rng.uniform(
+            size * 0.25,
+            size * 0.75,
         )
 
-        spread = rng.uniform(
-            8,
-            15,
+        py = rng.uniform(
+            size * 0.25,
+            size * 0.75,
         )
 
-        defect = {
-            p
-            for p in valid
-            if (
-                (p[1] - cx - gx) ** 2
-                + (p[0] - cy - gy) ** 2
-                < spread
-                and rng.random()
-                < 0.82
+        sigma = rng.uniform(
+            size * 0.08,
+            size * 0.16,
+        )
+
+        local = np.exp(
+            -(
+                (xx - px) ** 2
+                + (yy - py) ** 2
             )
-        }
+            / (2 * sigma ** 2)
+        )
 
-    elif pattern == "random":
-        defect = {
-            p
-            for p in valid
-            if rng.random()
-            < 0.11
-        }
+        base -= 65 * local
 
-    else:
-        defect = {
-            p
-            for p in valid
-            if rng.random()
-            < 0.015
-        }
+    elif pattern == "band":
 
-    for row, col in valid:
-        x0 = margin + col * cell
-        y0 = margin + row * cell
-        x1 = x0 + cell - 0.55
-        y1 = y0 + cell - 0.55
+        angle = rng.uniform(
+            -0.5,
+            0.5,
+        )
 
-        fill = (
-            (42, 42, 44, 255)
-            if (
-                row,
-                col,
-            ) in defect
-            else (
-                211,
-                213,
-                216,
-                255,
+        line = (
+            yy
+            - (
+                size * 0.48
+                + angle
+                * (
+                    xx
+                    - size / 2
+                )
             )
         )
 
-        draw.rectangle(
-            (
-                x0,
-                y0,
-                x1,
-                y1,
-            ),
-            fill=fill,
+        band = np.exp(
+            -(line ** 2)
+            / (
+                2
+                * (
+                    size * 0.055
+                ) ** 2
+            )
         )
 
-    draw.rectangle(
-        (
-            size / 2 - 4,
-            size
-            - margin
-            - cell * 1.2,
-            size / 2 + 4,
-            size
-            - margin
-            + 1,
-        ),
-        fill=(
+        base -= 48 * band
+
+    elif pattern == "streak":
+
+        for _ in range(
+            rng.integers(2, 5)
+        ):
+
+            x0 = rng.uniform(
+                0,
+                size,
+            )
+
+            width = rng.uniform(
+                1.5,
+                4.5,
+            )
+
+            streak = np.exp(
+                -(
+                    (xx - x0) ** 2
+                )
+                / (
+                    2
+                    * width ** 2
+                )
+            )
+
+            base -= (
+                rng.uniform(
+                    18,
+                    38,
+                )
+                * streak
+            )
+
+    elif pattern == "texture":
+
+        coarse = (
+            12
+            * np.sin(
+                xx * 0.18
+                + rng.uniform(
+                    0,
+                    np.pi,
+                )
+            )
+            * np.sin(
+                yy * 0.16
+                + rng.uniform(
+                    0,
+                    np.pi,
+                )
+            )
+        )
+
+        base += coarse
+
+    elif pattern == "clean":
+
+        base += rng.normal(
             0,
-            0,
-            0,
-            0,
-        ),
+            3,
+            (size, size),
+        )
+
+    # Sparse irregular dark features
+    for _ in range(
+        rng.integers(5, 18)
+    ):
+
+        px = rng.integers(
+            3,
+            size - 3,
+        )
+
+        py = rng.integers(
+            3,
+            size - 3,
+        )
+
+        radius = rng.uniform(
+            0.8,
+            3.5,
+        )
+
+        spot = np.exp(
+            -(
+                (xx - px) ** 2
+                + (yy - py) ** 2
+            )
+            / (
+                2
+                * radius ** 2
+            )
+        )
+
+        base -= (
+            rng.uniform(
+                8,
+                28,
+            )
+            * spot
+        )
+
+    base = np.clip(
+        base,
+        35,
+        220,
+    ).astype(
+        np.uint8
     )
 
-    buf = BytesIO()
+    image = Image.fromarray(
+        base,
+        mode="L",
+    ).convert(
+        "RGB"
+    )
 
-    img.save(
-        buf,
+    # Slight blur makes it feel more like inspection imagery
+    image = image.filter(
+        ImageFilter.GaussianBlur(
+            radius=0.35
+        )
+    )
+
+    # Subtle dark square border
+    draw = ImageDraw.Draw(
+        image
+    )
+
+    draw.rectangle(
+        [
+            0,
+            0,
+            size - 1,
+            size - 1,
+        ],
+        outline=(
+            54,
+            58,
+            62,
+        ),
+        width=2,
+    )
+
+    buffer = BytesIO()
+
+    image.save(
+        buffer,
         format="PNG",
     )
 
-    return buf.getvalue()
+    return buffer.getvalue()
 
 
 def wafer_image(
     pattern,
     seed,
 ):
+
     return Image.open(
         BytesIO(
             make_wafer_png(
@@ -474,30 +726,28 @@ def wafer_image(
     ).copy()
 
 
-@st.cache_resource
+# ---------------------------------------------------------------------
+# Plot
+# ---------------------------------------------------------------------
+
 def build_tsne_figure(
+    df,
     feature_set,
     clustering_method,
-    n_clusters,
     show_cluster_outlines,
 ):
-    df = run_analysis(
-        feature_set,
-        clustering_method,
-        n_clusters,
-    )
 
     cluster_colors = [
-        "#008080",
-        "#800020",
-        "#007BA7",
-        "#6A0DAD",
-        "#D97706",
-        "#2E8B57",
-        "#C71585",
-        "#64748B",
-        "#B8860B",
-        "#111827",
+        "#009E9E",
+        "#A70D35",
+        "#147DA5",
+        "#6A45A5",
+        "#D17A0B",
+        "#338A64",
+        "#C23B7A",
+        "#68727C",
+        "#A48515",
+        "#25292E",
     ]
 
     colors = [
@@ -521,17 +771,15 @@ def build_tsne_figure(
         1,
     )
 
-    image_w = (
-        x_span * 0.018
-    )
-
-    image_h = (
-        y_span * 0.026
-    )
+    # Larger than the previous version.
+    image_w = x_span * 0.024
+    image_h = y_span * 0.034
 
     fig = go.Figure()
 
+    # Cluster outline squares
     if show_cluster_outlines:
+
         fig.add_trace(
             go.Scatter(
                 x=df["tsne_x"],
@@ -539,50 +787,48 @@ def build_tsne_figure(
                 mode="markers",
                 marker=dict(
                     symbol="square",
-                    size=16,
+                    size=21,
                     color=colors,
-                    opacity=0.90,
+                    opacity=0.95,
                     line=dict(
-                        width=0.9,
-                        color="white",
+                        width=0,
                     ),
                 ),
                 text=df["labels"],
-                customdata=df[
-                    "cluster"
-                ],
+                customdata=df["cluster"],
                 hovertemplate=(
                     "<b>%{text}</b><br>"
-                    "Cluster: %{customdata}"
+                    "Cluster %{customdata}"
                     "<extra></extra>"
                 ),
                 showlegend=False,
             )
         )
 
+    # Invisible points preserve hover/selection
     fig.add_trace(
         go.Scatter(
             x=df["tsne_x"],
             y=df["tsne_y"],
             mode="markers",
             marker=dict(
-                size=17,
+                size=22,
                 opacity=0,
             ),
             text=df["labels"],
-            customdata=df[
-                "cluster"
-            ],
+            customdata=df["cluster"],
             hovertemplate=(
                 "<b>%{text}</b><br>"
-                "Cluster: %{customdata}"
+                "Cluster %{customdata}"
                 "<extra></extra>"
             ),
             showlegend=False,
         )
     )
 
+    # Wafer thumbnails
     for _, row in df.iterrows():
+
         fig.add_layout_image(
             dict(
                 source=wafer_image(
@@ -602,10 +848,13 @@ def build_tsne_figure(
             )
         )
 
+    # Legend
     if show_cluster_outlines:
+
         for cluster_id in sorted(
             df["cluster"].unique()
         ):
+
             fig.add_trace(
                 go.Scatter(
                     x=[None],
@@ -616,82 +865,100 @@ def build_tsne_figure(
                         size=11,
                         color=cluster_colors[
                             int(cluster_id)
-                            % len(
-                                cluster_colors
-                            )
+                            % len(cluster_colors)
                         ],
                     ),
-                    name=(
-                        f"Cluster "
-                        f"{cluster_id}"
-                    ),
+                    name=f"Cluster {cluster_id}",
                 )
             )
 
     fig.update_layout(
         height=760,
-        plot_bgcolor="#eeeeee",
-        paper_bgcolor="#eeeeee",
+        plot_bgcolor="#FFFFFF",
+        paper_bgcolor="#FFFFFF",
         font=dict(
-            color="black"
+            family="Inter, sans-serif",
+            color="#181A1D",
+            size=12,
         ),
         margin=dict(
-            l=20,
-            r=10,
-            t=40,
-            b=20,
+            l=28,
+            r=18,
+            t=56,
+            b=30,
         ),
         title=dict(
             text=(
-                f"{feature_set} | "
-                f"{clustering_method} "
-                "clustering"
+                f"<b>{feature_set}</b>  |  "
+                f"{clustering_method} clustering"
             ),
+            x=0.015,
+            xanchor="left",
             font=dict(
-                color="black",
-                size=16,
+                family="Inter, sans-serif",
+                color="#181A1D",
+                size=18,
             ),
         ),
         legend=dict(
             title=dict(
-                text=(
-                    "Cluster assignment"
-                ),
+                text="Cluster assignment",
                 font=dict(
-                    color="black"
+                    color="#3E444A",
+                    size=12,
                 ),
             ),
             font=dict(
-                color="black"
+                color="#4F565E",
+                size=11,
             ),
-            bgcolor=(
-                "rgba("
-                "238,238,238,0.82"
-                ")"
-            ),
+            bgcolor="rgba(255,255,255,0)",
+            borderwidth=0,
+            x=0.98,
+            xanchor="right",
+            y=0.99,
+            yanchor="top",
+        ),
+        hoverlabel=dict(
+            font_family="Inter",
         ),
     )
 
     fig.update_xaxes(
         showgrid=False,
         zeroline=False,
+        showline=True,
+        linewidth=1,
+        linecolor="#CBD1D7",
+        tickcolor="#CBD1D7",
         title="t-SNE 1",
-        color="black",
+        color="#626A73",
+        ticks="outside",
     )
 
     fig.update_yaxes(
         showgrid=False,
         zeroline=False,
+        showline=True,
+        linewidth=1,
+        linecolor="#CBD1D7",
+        tickcolor="#CBD1D7",
         title="t-SNE 2",
-        color="black",
+        color="#626A73",
+        ticks="outside",
     )
 
     return fig
 
 
+# ---------------------------------------------------------------------
+# Analysis
+# ---------------------------------------------------------------------
+
 with st.spinner(
     "Computing t-SNE and clustering..."
 ):
+
     df = run_analysis(
         feature_set,
         clustering_method,
@@ -699,40 +966,68 @@ with st.spinner(
     )
 
 
-with col1:
-    fig = build_tsne_figure(
-        feature_set,
-        clustering_method,
-        n_clusters,
-        show_cluster_outlines,
-    )
+# ---------------------------------------------------------------------
+# Main layout
+# ---------------------------------------------------------------------
 
-    event = st.plotly_chart(
-        fig,
-        use_container_width=True,
-        key=(
-            f"tsne_{feature_set}_"
-            f"{clustering_method}_"
-            f"{n_clusters}_"
-            f"{show_cluster_outlines}"
-        ),
-        on_select="rerun",
-        selection_mode="points",
-    )
+plot_col, preview_col = st.columns(
+    [3.3, 1.15],
+    gap="medium",
+)
 
 
-with col2:
-    st.markdown(
-        "<h3 style='color:black;'>"
-        "Wafer Preview"
-        "</h3>",
-        unsafe_allow_html=True,
-    )
+# ---------------------------------------------------------------------
+# Plot card
+# ---------------------------------------------------------------------
 
-    selected_idx = 0
+with plot_col:
+
+    with st.container(
+        border=True
+    ):
+
+        show_cluster_outlines = st.session_state.get(
+            "show_cluster_outlines",
+            True,
+        )
+
+        fig = build_tsne_figure(
+            df,
+            feature_set,
+            clustering_method,
+            show_cluster_outlines,
+        )
+
+        event = st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={
+                "displayModeBar": False,
+                "scrollZoom": False,
+            },
+            key=(
+                f"tsne_"
+                f"{feature_set}_"
+                f"{clustering_method}_"
+                f"{n_clusters}_"
+                f"{show_cluster_outlines}"
+            ),
+            on_select="rerun",
+            selection_mode="points",
+        )
+
+
+# ---------------------------------------------------------------------
+# Selected wafer
+# ---------------------------------------------------------------------
+
+selected_idx = 0
+
+try:
 
     if event.selection.points:
-        idx = (
+
+        selected_idx = (
             event.selection.points[0]
             .get(
                 "point_index",
@@ -740,69 +1035,108 @@ with col2:
             )
         )
 
-        if 0 <= idx < len(df):
-            selected_idx = idx
+except Exception:
 
-    selected = df.iloc[
-        selected_idx
-    ]
+    selected_idx = 0
 
-    st.image(
-        wafer_image(
-            selected["pattern"],
-            selected["seed"],
-        ),
-        use_container_width=True,
-    )
 
-    st.markdown(
-        f"""
-        <div style="
-            color:black;
-            font-size:18px;
-            font-weight:600;
-            text-align:center;
-            margin-top:8px;">
-        {selected["labels"]}<br>
-        Cluster: {selected["cluster"]}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+if not (
+    0
+    <= selected_idx
+    < len(df)
+):
 
-    st.markdown(
-        "<h3 style='color:black;'>"
-        "Cluster Counts"
-        "</h3>",
-        unsafe_allow_html=True,
-    )
+    selected_idx = 0
 
-    st.dataframe(
-        df["cluster"]
-        .value_counts()
-        .sort_index()
-        .rename_axis(
-            "Cluster"
+
+selected = df.iloc[
+    selected_idx
+]
+
+
+# ---------------------------------------------------------------------
+# Preview card
+# ---------------------------------------------------------------------
+
+with preview_col:
+
+    with st.container(
+        border=True
+    ):
+
+        st.markdown(
+            """
+            <div class="section-heading">
+                Wafer Preview
+            </div>
+            <div class="section-line"></div>
+            """,
+            unsafe_allow_html=True,
         )
-        .reset_index(
-            name="Count"
-        ),
-        use_container_width=True,
-        hide_index=True,
-    )
 
-    st.markdown(
-        "<div style='"
-        "color:black;"
-        "font-weight:600;"
-        "margin-top:18px;'>"
-        "Display Options"
-        "</div>",
-        unsafe_allow_html=True,
-    )
+        st.image(
+            wafer_image(
+                selected["pattern"],
+                selected["seed"],
+            ),
+            use_container_width=True,
+        )
 
-    st.toggle(
-        "Show cluster outlines",
-        value=True,
-        key="show_cluster_outlines",
-    )
+        st.markdown(
+            f"""
+            <div class="selected-wafer">
+                {selected["labels"]}
+            </div>
+
+            <div class="selected-cluster">
+                Cluster {selected["cluster"]}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.markdown(
+            """
+            <div class="section-heading"
+                 style="margin-top:24px;">
+                Cluster Counts
+            </div>
+            <div class="section-line"></div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        cluster_counts = (
+            df["cluster"]
+            .value_counts()
+            .sort_index()
+            .rename_axis(
+                "Cluster"
+            )
+            .reset_index(
+                name="Count"
+            )
+        )
+
+        st.dataframe(
+            cluster_counts,
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        st.markdown(
+            """
+            <div class="section-heading"
+                 style="margin-top:26px;">
+                Display Options
+            </div>
+            <div class="section-line"></div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        st.toggle(
+            "Show cluster outlines",
+            value=True,
+            key="show_cluster_outlines",
+        )
