@@ -244,12 +244,32 @@ st.markdown(
         background: transparent;
     }
 
-    header[data-testid="stHeader"] * {
+    /* Force Streamlit top-right toolbar icons/text to black */
+    div[data-testid="stToolbar"] {
         color: #181A1D !important;
     }
     
-    header[data-testid="stHeader"] svg,
-    header[data-testid="stHeader"] svg * {
+    div[data-testid="stToolbar"] * {
+        color: #181A1D !important;
+    }
+    
+    div[data-testid="stToolbar"] svg {
+        color: #181A1D !important;
+        fill: #181A1D !important;
+        stroke: #181A1D !important;
+    }
+    
+    div[data-testid="stToolbar"] svg * {
+        fill: #181A1D !important;
+        stroke: #181A1D !important;
+    }
+    
+    div[data-testid="stToolbar"] button {
+        color: #181A1D !important;
+    }
+    
+    div[data-testid="stToolbar"] button svg {
+        color: #181A1D !important;
         fill: #181A1D !important;
         stroke: #181A1D !important;
     }
