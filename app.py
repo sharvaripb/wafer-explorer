@@ -244,6 +244,16 @@ st.markdown(
         background: transparent;
     }
 
+    header[data-testid="stHeader"] * {
+        color: #181A1D !important;
+    }
+    
+    header[data-testid="stHeader"] svg,
+    header[data-testid="stHeader"] svg * {
+        fill: #181A1D !important;
+        stroke: #181A1D !important;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
