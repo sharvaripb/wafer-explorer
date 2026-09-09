@@ -10,9 +10,9 @@ from sklearn.manifold import TSNE
 from sklearn.preprocessing import StandardScaler
 
 
-# ---------------------------------------------------------------------
-# Page setup
-# ---------------------------------------------------------------------
+# ============================================================
+# PAGE SETUP
+# ============================================================
 
 st.set_page_config(
     page_title="Wafer Explorer",
@@ -21,9 +21,9 @@ st.set_page_config(
 )
 
 
-# ---------------------------------------------------------------------
-# Styling
-# ---------------------------------------------------------------------
+# ============================================================
+# STYLING
+# ============================================================
 
 st.markdown(
     """
@@ -40,18 +40,44 @@ st.markdown(
         color: #181A1D;
     }
 
+    /* Main page width */
     .block-container {
         max-width: 1500px;
-        padding-top: 2.1rem;
+        padding-top: 1.6rem;
         padding-bottom: 2rem;
         padding-left: 2rem;
         padding-right: 2rem;
     }
 
-    /* Main heading */
+    /* --------------------------------------------------------
+       HEADER PANEL
+       -------------------------------------------------------- */
+
+    .header-panel {
+        width: 100%;
+        box-sizing: border-box;
+        background: #FFFFFF;
+        border: 1px solid #D9DDE2;
+        border-radius: 7px;
+        padding: 24px 26px 21px 26px;
+        margin: 0 0 18px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .header-panel::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: #00A6A6;
+    }
+
     .wafer-title {
         font-family: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
-        font-size: 52px;
+        font-size: 50px;
         line-height: 1.02;
         letter-spacing: -2.2px;
         font-weight: 500;
@@ -64,10 +90,13 @@ st.markdown(
         font-size: 13px;
         line-height: 1.5;
         color: #747A82;
-        margin-bottom: 24px;
+        margin: 0;
     }
 
-    /* Control labels */
+    /* --------------------------------------------------------
+       CONTROL LABELS
+       -------------------------------------------------------- */
+
     label {
         font-family: "Inter", sans-serif !important;
         color: #181A1D !important;
@@ -77,7 +106,10 @@ st.markdown(
         text-transform: uppercase !important;
     }
 
-    /* Select boxes */
+    /* --------------------------------------------------------
+       SELECT BOXES
+       -------------------------------------------------------- */
+
     div[data-baseweb="select"] > div {
         background: #202328 !important;
         border: 1px solid #202328 !important;
@@ -94,7 +126,10 @@ st.markdown(
         fill: #F7F7F7 !important;
     }
 
-    /* Number input */
+    /* --------------------------------------------------------
+       NUMBER INPUT
+       -------------------------------------------------------- */
+
     div[data-testid="stNumberInput"] input {
         background: #202328 !important;
         color: #F7F7F7 !important;
@@ -115,7 +150,10 @@ st.markdown(
         background: #2A2E34 !important;
     }
 
-    /* Containers/cards */
+    /* --------------------------------------------------------
+       CARDS
+       -------------------------------------------------------- */
+
     div[data-testid="stVerticalBlockBorderWrapper"] {
         background: #FFFFFF;
         border: 1px solid #D9DDE2 !important;
@@ -123,7 +161,10 @@ st.markdown(
         box-shadow: none !important;
     }
 
-    /* Section headings */
+    /* --------------------------------------------------------
+       SECTION HEADINGS
+       -------------------------------------------------------- */
+
     .section-heading {
         font-family: "Inter", sans-serif;
         font-size: 13px;
@@ -163,26 +204,34 @@ st.markdown(
         margin-bottom: 14px;
     }
 
-    /* Toggle text */
+    /* --------------------------------------------------------
+       TOGGLE
+       -------------------------------------------------------- */
+
     div[data-testid="stToggle"] p {
         color: #181A1D !important;
         font-family: "Inter", sans-serif !important;
         font-size: 14px !important;
     }
 
-    /* Cyan toggle */
     div[data-testid="stToggle"] button[aria-checked="true"] {
         background-color: #00A6A6 !important;
     }
 
-    /* Dataframe */
+    /* --------------------------------------------------------
+       DATAFRAME
+       -------------------------------------------------------- */
+
     div[data-testid="stDataFrame"] {
         border: 1px solid #D9DDE2;
         border-radius: 6px;
         overflow: hidden;
     }
 
-    /* Remove excess Streamlit chrome */
+    /* --------------------------------------------------------
+       STREAMLIT CHROME
+       -------------------------------------------------------- */
+
     #MainMenu {
         visibility: hidden;
     }
@@ -201,29 +250,28 @@ st.markdown(
 )
 
 
-# ---------------------------------------------------------------------
-# Header
-# ---------------------------------------------------------------------
-
-st.markdown(
-    '<div class="wafer-title">Wafer Explorer</div>',
-    unsafe_allow_html=True,
-)
+# ============================================================
+# HEADER
+# ============================================================
 
 st.markdown(
     """
-    <div class="wafer-disclaimer">
-        Portfolio reproduction using synthetic wafer images and synthetic image embeddings.
-        No proprietary manufacturing data is included.
+    <div class="header-panel">
+        <div class="wafer-title">Wafer Explorer</div>
+
+        <div class="wafer-disclaimer">
+            Portfolio reproduction using synthetic wafer images and synthetic image embeddings.
+            No proprietary manufacturing data is included.
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 
-# ---------------------------------------------------------------------
-# Controls
-# ---------------------------------------------------------------------
+# ============================================================
+# CONTROLS
+# ============================================================
 
 with st.container(border=True):
 
@@ -257,9 +305,9 @@ with st.container(border=True):
 st.write("")
 
 
-# ---------------------------------------------------------------------
-# Synthetic embedding data
-# ---------------------------------------------------------------------
+# ============================================================
+# SYNTHETIC EMBEDDING DATA
+# ============================================================
 
 @st.cache_data
 def generate_demo_data(feature_set):
@@ -270,8 +318,6 @@ def generate_demo_data(feature_set):
 
     n = 284
 
-    # Continuous latent structure so the t-SNE forms a manifold/cloud
-    # instead of artificial isolated blobs.
     t = np.sort(
         rng.uniform(-3.0, 3.0, n)
     )
@@ -353,9 +399,9 @@ def generate_demo_data(feature_set):
     return df, X
 
 
-# ---------------------------------------------------------------------
-# t-SNE + clustering
-# ---------------------------------------------------------------------
+# ============================================================
+# T-SNE + CLUSTERING
+# ============================================================
 
 @st.cache_data
 def run_analysis(
@@ -407,9 +453,9 @@ def run_analysis(
     return df
 
 
-# ---------------------------------------------------------------------
-# Synthetic square inspection images
-# ---------------------------------------------------------------------
+# ============================================================
+# SYNTHETIC SQUARE INSPECTION IMAGES
+# ============================================================
 
 @st.cache_data
 def make_wafer_png(
@@ -422,7 +468,6 @@ def make_wafer_png(
         int(seed)
     )
 
-    # Base grayscale inspection texture
     base = rng.normal(
         143,
         16,
@@ -434,7 +479,6 @@ def make_wafer_png(
         0:size
     ]
 
-    # Fine repeated sensor/material texture
     fine_texture = (
         5 * np.sin(xx * 0.85)
         + 4 * np.sin(yy * 0.93)
@@ -443,7 +487,6 @@ def make_wafer_png(
 
     base += fine_texture
 
-    # Slight illumination variation
     cx = size / 2 + rng.uniform(-8, 8)
     cy = size / 2 + rng.uniform(-8, 8)
 
@@ -460,7 +503,6 @@ def make_wafer_png(
         )
     )
 
-    # Pattern-dependent synthetic structures
     if pattern == "center":
 
         defect = np.exp(
@@ -478,22 +520,10 @@ def make_wafer_png(
     elif pattern == "edge":
 
         edge_band = (
-            np.exp(
-                -xx
-                / (size * 0.08)
-            )
-            + np.exp(
-                -(size - xx)
-                / (size * 0.08)
-            )
-            + np.exp(
-                -yy
-                / (size * 0.08)
-            )
-            + np.exp(
-                -(size - yy)
-                / (size * 0.08)
-            )
+            np.exp(-xx / (size * 0.08))
+            + np.exp(-(size - xx) / (size * 0.08))
+            + np.exp(-yy / (size * 0.08))
+            + np.exp(-(size - yy) / (size * 0.08))
         )
 
         base -= 28 * edge_band
@@ -620,7 +650,7 @@ def make_wafer_png(
             (size, size),
         )
 
-    # Sparse irregular dark features
+    # Sparse irregular features
     for _ in range(
         rng.integers(5, 18)
     ):
@@ -646,8 +676,7 @@ def make_wafer_png(
                 + (yy - py) ** 2
             )
             / (
-                2
-                * radius ** 2
+                2 * radius ** 2
             )
         )
 
@@ -674,14 +703,12 @@ def make_wafer_png(
         "RGB"
     )
 
-    # Slight blur makes it feel more like inspection imagery
     image = image.filter(
         ImageFilter.GaussianBlur(
             radius=0.35
         )
     )
 
-    # Subtle dark square border
     draw = ImageDraw.Draw(
         image
     )
@@ -726,9 +753,9 @@ def wafer_image(
     ).copy()
 
 
-# ---------------------------------------------------------------------
-# Plot
-# ---------------------------------------------------------------------
+# ============================================================
+# PLOT
+# ============================================================
 
 def build_tsne_figure(
     df,
@@ -771,13 +798,13 @@ def build_tsne_figure(
         1,
     )
 
-    # Larger than the previous version.
+    # Keep current thumbnail size
     image_w = x_span * 0.024
     image_h = y_span * 0.034
 
     fig = go.Figure()
 
-    # Cluster outline squares
+    # Slightly larger coloured outline behind each image
     if show_cluster_outlines:
 
         fig.add_trace(
@@ -787,9 +814,9 @@ def build_tsne_figure(
                 mode="markers",
                 marker=dict(
                     symbol="square",
-                    size=21,
+                    size=24,
                     color=colors,
-                    opacity=0.95,
+                    opacity=1,
                     line=dict(
                         width=0,
                     ),
@@ -805,14 +832,14 @@ def build_tsne_figure(
             )
         )
 
-    # Invisible points preserve hover/selection
+    # Invisible selection layer
     fig.add_trace(
         go.Scatter(
             x=df["tsne_x"],
             y=df["tsne_y"],
             mode="markers",
             marker=dict(
-                size=22,
+                size=24,
                 opacity=0,
             ),
             text=df["labels"],
@@ -848,7 +875,7 @@ def build_tsne_figure(
             )
         )
 
-    # Legend
+    # Legend traces
     if show_cluster_outlines:
 
         for cluster_id in sorted(
@@ -862,7 +889,7 @@ def build_tsne_figure(
                     mode="markers",
                     marker=dict(
                         symbol="square",
-                        size=11,
+                        size=10,
                         color=cluster_colors[
                             int(cluster_id)
                             % len(cluster_colors)
@@ -874,51 +901,67 @@ def build_tsne_figure(
 
     fig.update_layout(
         height=760,
+
         plot_bgcolor="#FFFFFF",
         paper_bgcolor="#FFFFFF",
+
         font=dict(
-            family="Inter, sans-serif",
+            family="Inter, Helvetica Neue, Arial, sans-serif",
             color="#181A1D",
             size=12,
         ),
+
+        # Extra space on right is deliberately reserved for legend
         margin=dict(
             l=28,
-            r=18,
-            t=56,
+            r=150,
+            t=62,
             b=30,
         ),
+
+        # Cleaner title
         title=dict(
             text=(
-                f"<b>{feature_set}</b>  |  "
-                f"{clustering_method} clustering"
+                f"{feature_set}"
+                f"<span style='color:#A1A7AE;'> · </span>"
+                f"{clustering_method}"
             ),
             x=0.015,
             xanchor="left",
+            y=0.975,
+            yanchor="top",
             font=dict(
-                family="Inter, sans-serif",
+                family="Inter, Helvetica Neue, Arial, sans-serif",
                 color="#181A1D",
-                size=18,
+                size=17,
+                weight=600,
             ),
         ),
+
+        # Legend is now OUTSIDE the actual plotting area
         legend=dict(
             title=dict(
                 text="Cluster assignment",
                 font=dict(
-                    color="#3E444A",
-                    size=12,
+                    family="Inter, Helvetica Neue, Arial, sans-serif",
+                    color="#59616A",
+                    size=11,
                 ),
             ),
             font=dict(
-                color="#4F565E",
+                family="Inter, Helvetica Neue, Arial, sans-serif",
+                color="#59616A",
                 size=11,
             ),
             bgcolor="rgba(255,255,255,0)",
             borderwidth=0,
-            x=0.98,
-            xanchor="right",
-            y=0.99,
+
+            x=1.02,
+            xanchor="left",
+            y=1,
             yanchor="top",
         ),
+
         hoverlabel=dict(
             font_family="Inter",
         ),
@@ -934,6 +977,12 @@ def build_tsne_figure(
         title="t-SNE 1",
         color="#626A73",
         ticks="outside",
+
+        # Prevent wafers from being clipped against edges
+        range=[
+            df["tsne_x"].min() - x_span * 0.05,
+            df["tsne_x"].max() + x_span * 0.05,
+        ],
     )
 
     fig.update_yaxes(
@@ -946,14 +995,19 @@ def build_tsne_figure(
         title="t-SNE 2",
         color="#626A73",
         ticks="outside",
+
+        range=[
+            df["tsne_y"].min() - y_span * 0.06,
+            df["tsne_y"].max() + y_span * 0.06,
+        ],
     )
 
     return fig
 
 
-# ---------------------------------------------------------------------
-# Analysis
-# ---------------------------------------------------------------------
+# ============================================================
+# ANALYSIS
+# ============================================================
 
 with st.spinner(
     "Computing t-SNE and clustering..."
@@ -966,9 +1020,9 @@ with st.spinner(
     )
 
 
-# ---------------------------------------------------------------------
-# Main layout
-# ---------------------------------------------------------------------
+# ============================================================
+# MAIN LAYOUT
+# ============================================================
 
 plot_col, preview_col = st.columns(
     [3.3, 1.15],
@@ -976,9 +1030,9 @@ plot_col, preview_col = st.columns(
 )
 
 
-# ---------------------------------------------------------------------
-# Plot card
-# ---------------------------------------------------------------------
+# ============================================================
+# PLOT CARD
+# ============================================================
 
 with plot_col:
 
@@ -1017,9 +1071,9 @@ with plot_col:
         )
 
 
-# ---------------------------------------------------------------------
-# Selected wafer
-# ---------------------------------------------------------------------
+# ============================================================
+# SELECTED WAFER
+# ============================================================
 
 selected_idx = 0
 
@@ -1054,9 +1108,9 @@ selected = df.iloc[
 ]
 
 
-# ---------------------------------------------------------------------
-# Preview card
-# ---------------------------------------------------------------------
+# ============================================================
+# PREVIEW CARD
+# ============================================================
 
 with preview_col:
 
