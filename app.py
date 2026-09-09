@@ -258,11 +258,6 @@ st.markdown(
     """
     <div class="header-panel">
         <div class="wafer-title">Wafer Explorer</div>
-
-        <div class="wafer-disclaimer">
-            Portfolio reproduction using synthetic wafer images and synthetic image embeddings.
-            No proprietary manufacturing data is included.
-        </div>
     </div>
     """,
     unsafe_allow_html=True,
