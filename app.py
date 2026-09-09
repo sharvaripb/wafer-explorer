@@ -244,34 +244,20 @@ st.markdown(
         background: transparent;
     }
 
-    /* Force Streamlit top-right toolbar icons/text to black */
-    div[data-testid="stToolbar"] {
+    /* Streamlit Community Cloud toolbar icons: star, edit, GitHub */
+    [data-testid="stToolbarActionButtonIcon"] {
+        filter: brightness(0) saturate(100%) !important;
+        opacity: 1 !important;
+    }
+    
+    /* Keep toolbar labels such as Share black */
+    [data-testid="stToolbarActionButtonLabel"] {
         color: #181A1D !important;
     }
     
-    div[data-testid="stToolbar"] * {
-        color: #181A1D !important;
-    }
-    
-    div[data-testid="stToolbar"] svg {
-        color: #181A1D !important;
-        fill: #181A1D !important;
-        stroke: #181A1D !important;
-    }
-    
-    div[data-testid="stToolbar"] svg * {
-        fill: #181A1D !important;
-        stroke: #181A1D !important;
-    }
-    
-    div[data-testid="stToolbar"] button {
-        color: #181A1D !important;
-    }
-    
-    div[data-testid="stToolbar"] button svg {
-        color: #181A1D !important;
-        fill: #181A1D !important;
-        stroke: #181A1D !important;
+    /* Some Cloud toolbar icons are nested one level lower */
+    [data-testid="stToolbarActionButtonIcon"] * {
+        filter: brightness(0) saturate(100%) !important;
     }
 
     </style>
